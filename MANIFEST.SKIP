@@ -1,0 +1,6 @@
+.*\.sw.
+mnnuer\.yml
+App-Munner-.*
+\.gitignore
+perltidy\.ERR
+local

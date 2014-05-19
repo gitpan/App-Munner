@@ -1,0 +1,121 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use YAML qw( Load );
+use Getopt::Long::Descriptive qw( describe_options );
+use Parallel::ForkManager;
+
+my ( $args, $usage ) = describe_options(
+    "munner %o",
+    [
+        "config|c:s" => "App runner config file ( default ./munner.yml )",
+        { default => "munner.yml" }
+    ],
+    [
+        "base-dir|d:s" => "Global base directory ( default ../ )",
+        { default => ".." }
+    ],
+    [ 'app|a:s@'  => "App to run", { default => [] } ],
+    [ "all|A"     => "Start All",  { default => 0 } ],
+    [ "help|h"    => "Help",       { default => 0 } ],
+    [ "perldoc|p" => "Perldoc App::Munner" ],
+);
+
+if ( $args->help ) {
+    cmd_help();
+    config_help();
+}
+
+if ( $args->perldoc ) {
+    exec perldoc => "App::Munner";
+}
+
+my $config = load_config( $args->config );
+
+my $base_dir = $args->base_dir || $config->{base_dir}
+  or cmd_help("Missing base_dir");
+
+cmd_help("base_dir is not found --> $base_dir")
+  if !-d $base_dir;
+
+if ( !$config->{apps} ) {
+    config_help("Missing apps section in your config");
+}
+
+if ( !UNIVERSAL::isa( $config->{apps}, "HASH" ) ) {
+    config_help("apps section of the config needs to be in hash list");
+}
+
+my %apps = %{ $config->{apps} }
+  or config_help("Please specify APPs in your config");
+
+my @apps = $args->all ? ( keys %apps ) : @{ $args->app }
+  or cmd_help("Please specify the APP you want to start");
+
+my $forker = Parallel::ForkManager->new( scalar @apps );
+
+foreach my $app_name (@apps) {
+    my $app_config = $apps{$app_name}
+      or config_help("APP $app_name config is not found");
+    my $app_dir = $app_config->{dir}
+      or config_help("APP $app_name has no working directory");
+    my $app_wd = "$base_dir/$app_dir";
+    config_help("APP $app_name working directory is not found --> $app_wd")
+      if !-d $app_wd;
+    chdir $app_wd;
+    my $run = $app_config->{run}
+      or config_help("APP $app_name has no start command");
+
+    $app_config->{carton} //= 1;
+
+    my $carton = $app_config->{carton} ? "carton exec" : q{};
+
+    $forker->start and next;
+
+    print "Starting $app_name ...\n";
+    system qq{$carton $run};
+
+    $forker->finish;
+}
+
+$forker->wait_all_children;
+
+exit;
+
+sub load_config {
+    my $file = shift;
+    open FILE, "<", $file
+      or config_help("Unable to load config file $file");
+    local $/;
+    my $config = Load(<FILE>);
+    close FILE;
+    return $config;
+}
+
+sub cmd_help {
+    my $message = shift || q{};
+    print "$message\n\n" . $usage->text;
+    exit
+      if $message;
+}
+
+sub config_help {
+    my $message = shift || q{};
+    print <<"HELP";
+$message
+
+munner.yml config template:
+---------------------------
+base_dir: "... base directory to find the app ..."
+apps:
+    web-frontend:
+        dir: "... either full path or the tail part after base_dir ..."
+        run: "... command ..."
+    foobar-api:
+        dir: "... path cound find the command to run ..."
+        run: "... start up command ..."
+
+HELP
+
+    exit;
+}

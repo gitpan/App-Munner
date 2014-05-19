@@ -1,0 +1,17 @@
+base_dir: /home/mvu/websrc
+apps:
+    gateway:
+        dir: site-gateway
+        run: bin/app.pl
+    dbapi:
+        dir: site-dbapi
+        run: bin/data_api_app.pl
+    feed:
+        dir: site-feedreader
+        run: bin/app.pl
+    scraper:
+        dir: site-scraper
+        run: bin/sc.pl
+    imager:
+        dir: site-imager
+        run: bin/file.pl
