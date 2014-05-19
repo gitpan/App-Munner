@@ -28,7 +28,7 @@ my %WriteMakefileArgs = (
     "YAML" => 0
   },
   "TEST_REQUIRES" => {},
-  "VERSION" => "0.1",
+  "VERSION" => "0.1.1",
   "test" => {
     "TESTS" => ""
   }
