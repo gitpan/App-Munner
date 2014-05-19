@@ -16,4 +16,4 @@ requires:
   Getopt::Long::Descriptive: '0'
   Parallel::ForkManager: '0'
   YAML: '0'
-version: 0.1.1
+version: '0.2'

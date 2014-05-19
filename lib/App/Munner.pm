@@ -1,5 +1,5 @@
 package App::Munner;
-$App::Munner::VERSION = '0.1.1';
+$App::Munner::VERSION = '0.2';
 =head1 NAME
 
 Munner - Multi-Apps Runner
@@ -36,7 +36,9 @@ in one call. It is a very handy tools to start multiple applications.
 
 =head2 System perl
 
- after install, just call munner <options>
+after install, just call
+
+ munner <options>
 
 =head2 Perlbrew
 
@@ -65,6 +67,7 @@ To run munner, you will need a YAML format of config file.
 The config file name is munner.yml
 
 It looks like this:
+
  ---------------------------
  base_dir: "... base directory to find the app ..."
  apps:
@@ -110,6 +113,23 @@ show a simple help page
 show this perldoc
 
  perldoc App::Munner
+
+=head1 AUTHOR
+
+Michael Vu <micvu@cpan.org>
+
+=head1 SUPPORT
+
+Please submit bugs to the CPAN RT system at Bitbucket Issue Tracker: L<http://goo.gl/gHJQii>
+or via email <micvu@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2014 by Michael Vu.
+
+This is free software, licensed under:
+
+The Artistic License 2.0 (GPL Compatible)
 
 =cut
 
