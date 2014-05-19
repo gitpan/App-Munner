@@ -12,8 +12,7 @@ my ( $args, $usage ) = describe_options(
         { default => "munner.yml" }
     ],
     [
-        "base-dir|d:s" => "Global base directory ( default ../ )",
-        { default => ".." }
+        "base-dir|d:s" => "Global base directory ( default ../ )"
     ],
     [ 'app|a:s@'  => "App to run", { default => [] } ],
     [ "all|A"     => "Start All",  { default => 0 } ],

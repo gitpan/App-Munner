@@ -1,5 +1,5 @@
 package App::Munner;
-$App::Munner::VERSION = '0.2';
+$App::Munner::VERSION = '0.3.0';
 =head1 NAME
 
 Munner - Multi-Apps Runner
@@ -120,7 +120,7 @@ Michael Vu <micvu@cpan.org>
 
 =head1 SUPPORT
 
-Please submit bugs to the CPAN RT system at Bitbucket Issue Tracker: L<http://goo.gl/gHJQii>
+Please submit bugs to the Bitbucket Issue Tracker: L<http://goo.gl/gHJQii>
 or via email <micvu@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
