@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 
+use App::Munner;
 use Data::UUID;
 use File::Temp qw( tempfile );
 use Getopt::Long::Descriptive qw( describe_options );
@@ -14,15 +15,17 @@ use Module::Load qw( load );
 
 my $command = $ARGV[0] || "start";
 
-if ( $command =~/(start|stop|graceful|restart|status)/ ) {
+if ( $command =~/(start|help|doc)/ ) {
     shift @ARGV;
 }
 else {
     $command = "start";
 }
 
+my $version = $App::Munner::VERSION || q{};
+
 my ( $args, $usage ) = describe_options(
-    "munner [start|stop|graceful|restart|status] %o",
+    "munner [start|help|doc] %o\nversion: $version",
     [
         "config|c:s" => "App runner config file ( default ./munner.yml )",
         { default => "munner.yml" }
@@ -33,16 +36,13 @@ my ( $args, $usage ) = describe_options(
     [ 'app|a:s@'   => "App to run",            { default => [] } ],
     [ "all|A"      => "Start All",             { default => 0 } ],
     [ "group|g=s@" => "Start a group of apps", { default => 0 } ],
-    [ "help|h"     => "Help",                  { default => 0 } ],
-    [ "perldoc|p"  => "Perldoc App::Munner" ],
 );
 
-if ( $args->help ) {
-    cmd_help();
-    config_help();
+if ( $command eq "help" ) {
+    cmd_help(" ");
 }
 
-if ( $args->perldoc ) {
+if ( $command eq "doc" ) {
     exec perldoc => "App::Munner";
 }
 
@@ -165,6 +165,7 @@ sub load_config {
 sub cmd_help {
     my $message = shift || q{};
     print "$message\n\n" . $usage->text;
+    print "\n\n";
     exit
       if $message;
 }
