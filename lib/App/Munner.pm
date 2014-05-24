@@ -1,5 +1,5 @@
 package App::Munner;
-$App::Munner::VERSION = '0.4';
+$App::Munner::VERSION = '0.41';
 =head1 NAME
 
 Munner - Multi-Apps Runner
@@ -97,18 +97,18 @@ It looks like this:
         ## only start these apps
         apps:
             - login-server
-              db-api
+            - db-api
     events:
         apps:
             - login-server
-              event-api
+            - event-api
     website:
         ## start apps and above groups
         apps:
             - web-frontend
         groups:
             - database
-              events
+            - events
 
 =head2 Where to save the config file?
 
@@ -134,7 +134,7 @@ start event-api only
 
  munner -a event-api
 
-start a everything related for website
+start everything website (db, event and login)
 
  munner -g website
 

@@ -34,7 +34,7 @@ my %WriteMakefileArgs = (
     "YAML" => 0
   },
   "TEST_REQUIRES" => {},
-  "VERSION" => "0.4",
+  "VERSION" => "0.41",
   "test" => {
     "TESTS" => ""
   }

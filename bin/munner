@@ -202,18 +202,18 @@ groups:
         ## only start these apps
         apps:
             - login-server
-              db-api
+            - db-api
     events:
         apps:
             - login-server
-              event-api
+            - event-api
     website:
         ## start apps and above groups
         apps:
             - web-frontend
         groups:
             - database
-              events
+            - events
 
 HELP
 
