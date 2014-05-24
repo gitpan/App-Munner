@@ -1,5 +1,5 @@
 package App::Munner;
-$App::Munner::VERSION = '0.3.0';
+$App::Munner::VERSION = '0.4';
 =head1 NAME
 
 Munner - Multi-Apps Runner
@@ -24,6 +24,7 @@ in one call. It is a very handy tools to start multiple applications.
 
  echo App::Munner >> ~/cpanmfile
  perlbrew install-cpanm
+ perlbrew use <5.x.x>
  cat ~/cpanmfile | cpanm
 
 =head2 Carton
@@ -53,8 +54,9 @@ after install, just call
  munner [-Aacdh] [long options...]
         -c --config       App runner config file ( default ./munner.yml )
         -d --base-dir     Global base directory ( default ../ )
-        -a --app          App to run
-        -A --all          Start All
+        -a --app          run App
+        -g --group        run Group
+        -A --all          run All
         -h --cmd_help     Help
         -p --perldoc      Perldoc App::Munner
 
@@ -74,9 +76,39 @@ It looks like this:
     web-frontend:
         dir: "... either full path or the tail part after base_dir ..."
         run: "... command ..."
-    foobar-api:
+        carton: 1 or 0
+        non-stop: sleep N or pause
+    db-api:
         dir: "... path cound find the command to run ..."
+        env:
+            - foo: 1
+            - bar: 2
         run: "... start up command ..."
+    event-api:
+        dir: "websrc/event-api"
+        run: bin/app.pl
+        carton: 1
+    login-server:
+        dir: websrc/login-server
+        run: bin/app.pl
+        carton: 1
+ groups:
+    database:
+        ## only start these apps
+        apps:
+            - login-server
+              db-api
+    events:
+        apps:
+            - login-server
+              event-api
+    website:
+        ## start apps and above groups
+        apps:
+            - web-frontend
+        groups:
+            - database
+              events
 
 =head2 Where to save the config file?
 
@@ -98,13 +130,21 @@ start web-frontend only
 
  munner -a web-frontend
 
-start foobar-api only
+start event-api only
 
- munner -a foobar-api
+ munner -a event-api
 
-start everything in the config
+start a everything related for website
+
+ munner -g website
+
+start all apps in the config
 
  munner -A
+
+start all groups in the config?
+
+ do we need one? and why? munner -G
 
 show a simple help page
 

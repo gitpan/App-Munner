@@ -1,8 +1,16 @@
+2014-05-24 - 0.4
+    + inject environment variables
+    + can run at non stop mode either sleep or pause
+    + start apps in a group
+    + start groups in a group
+    - fix issue of ctrl-c
+    ? (skip 0.3 because PAUSE thinks v0.2 is bigger than v0.3.0)
+
 2014-05-20 - 0.3.0
-    Bugfix base dir
+    - Bugfix base dir
 
 2014-05-19 - 0.2
-    POD Tidy
+    - POD Tidy
 
 2014-05-19 - 0.1
-    First version
+    + First version

@@ -1,12 +1,28 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use YAML qw( Load );
+
+use Data::UUID;
+use File::Temp qw( tempfile );
 use Getopt::Long::Descriptive qw( describe_options );
+use IPC::Signal qw( sig_num );
+use List::MoreUtils qw( uniq );
 use Parallel::ForkManager;
+use Unix::PID;
+use YAML qw( Load );
+use Module::Load qw( load );
+
+my $command = $ARGV[0] || "start";
+
+if ( $command =~/(start|stop|graceful|restart|status)/ ) {
+    shift @ARGV;
+}
+else {
+    $command = "start";
+}
 
 my ( $args, $usage ) = describe_options(
-    "munner %o",
+    "munner [start|stop|graceful|restart|status] %o",
     [
         "config|c:s" => "App runner config file ( default ./munner.yml )",
         { default => "munner.yml" }
@@ -14,10 +30,11 @@ my ( $args, $usage ) = describe_options(
     [
         "base-dir|d:s" => "Global base directory ( default ../ )"
     ],
-    [ 'app|a:s@'  => "App to run", { default => [] } ],
-    [ "all|A"     => "Start All",  { default => 0 } ],
-    [ "help|h"    => "Help",       { default => 0 } ],
-    [ "perldoc|p" => "Perldoc App::Munner" ],
+    [ 'app|a:s@'   => "App to run",            { default => [] } ],
+    [ "all|A"      => "Start All",             { default => 0 } ],
+    [ "group|g=s@" => "Start a group of apps", { default => 0 } ],
+    [ "help|h"     => "Help",                  { default => 0 } ],
+    [ "perldoc|p"  => "Perldoc App::Munner" ],
 );
 
 if ( $args->help ) {
@@ -48,34 +65,88 @@ if ( !UNIVERSAL::isa( $config->{apps}, "HASH" ) ) {
 my %apps = %{ $config->{apps} }
   or config_help("Please specify APPs in your config");
 
-my @apps = $args->all ? ( keys %apps ) : @{ $args->app }
+my @apps_from_groups = group_of_apps( $args->group );
+
+my @apps =
+    @apps_from_groups ? @apps_from_groups
+  : $args->all        ? ( keys %apps )
+  : @{ $args->app }
   or cmd_help("Please specify the APP you want to start");
 
 my $forker = Parallel::ForkManager->new( scalar @apps );
 
+my $munner_pid = $$;
+
 foreach my $app_name (@apps) {
     my $app_config = $apps{$app_name}
       or config_help("APP $app_name config is not found");
+
     my $app_dir = $app_config->{dir}
       or config_help("APP $app_name has no working directory");
+
     my $app_wd = "$base_dir/$app_dir";
+
     config_help("APP $app_name working directory is not found --> $app_wd")
       if !-d $app_wd;
-    chdir $app_wd;
+
     my $run = $app_config->{run}
       or config_help("APP $app_name has no start command");
 
-    $app_config->{carton} //= 1;
+    $app_config->{carton} //= 0;
 
-    my $carton = $app_config->{carton} ? "carton exec" : q{};
+    my $carton = $app_config->{carton} ? "carton exec " : q{};
 
-    $forker->start and next;
+    $app_config->{env} ||= [];
 
-    print "Starting $app_name ...\n";
-    system qq{$carton $run};
+    my $chdir = "cd $app_wd\n";
+
+    $app_config->{pid} = $forker->start
+      and next;
+
+    while (1) {
+        print "Munning $app_name ...\n";
+
+        my $env = _env( $app_config->{env} );
+
+        if ( $command eq "start" ) {
+            unlink _run( $app_name => $chdir . $env . "exec " . $carton . $run );
+        }
+
+        my $non_stop = $app_config->{"non-stop"} || q{};
+
+        last
+          if !$non_stop;
+
+        if ( $non_stop eq "pause" ) {
+            print "\n\nPress Enter to re-mun $app_name ...\n";
+            <STDIN>;
+            next;
+        }
+
+        if ( $non_stop =~ /sleep\s*(\d*)/ ) {
+            my $sec = $1 || 1;
+            sleep $sec;
+            next;
+        }
+
+        sleep 1;
+
+        if ( !is_munning() ) {
+            print "\n\n$app_name stops ...\n";
+            last;
+        }
+    }
 
     $forker->finish;
+
+    exit;
 }
+
+load "sigtrap", handler => \&killer, "INT";
+load "sigtrap", handler => \&killer, "STOP";
+load "sigtrap", handler => \&killer, "QUIT";
+
+END { killer() }
 
 $forker->wait_all_children;
 
@@ -110,11 +181,133 @@ apps:
     web-frontend:
         dir: "... either full path or the tail part after base_dir ..."
         run: "... command ..."
-    foobar-api:
+        carton: 1 or 0
+        non-stop: sleep N or pause
+    db-api:
         dir: "... path cound find the command to run ..."
+        env:
+            - foo: 1
+            - bar: 2
         run: "... start up command ..."
+    event-api:
+        dir: "websrc/event-api"
+        run: bin/app.pl
+        carton: 1
+    login-server:
+        dir: websrc/login-server
+        run: bin/app.pl
+        carton: 1
+groups:
+    database:
+        ## only start these apps
+        apps:
+            - login-server
+              db-api
+    events:
+        apps:
+            - login-server
+              event-api
+    website:
+        ## start apps and above groups
+        apps:
+            - web-frontend
+        groups:
+            - database
+              events
 
 HELP
 
     exit;
+}
+
+sub _env {
+    my $list = shift
+      or return q{};
+    return q{}
+      if ref $list ne "ARRAY";
+    my $env = q{};
+
+    foreach my $pair (@$list) {
+        next
+          if !$pair;
+        next
+          if ref $pair ne "HASH";
+        my ( $key, $val ) = %$pair;
+        print ">> Inject Env: $key\n"
+            if $key ne "UUID";
+        $env .= join "=", map { quotemeta $_ } ( $key, $val );
+        $env .= " \\\n";
+    }
+
+    return $env;
+}
+
+sub _run {
+    my $app_name = shift;
+    my $command  = shift
+      or die "$app_name is MISSING RUN COMMAND.";
+    my ( $fh, $filename ) = tempfile(
+        CLEANUP => 1,
+        UNLINK  => 1,
+        SUFFIX  => ".sh"
+    );
+    print $fh $command;
+    close $fh;
+    chmod 0500, $filename;
+    system $filename;
+    return $filename;
+}
+
+sub killer {
+    foreach my $app_name (@apps) {
+        my $app_config = $apps{$app_name};
+        my $pid       = delete $app_config->{pid}
+          or next;
+        kill sig_num("INT"), $pid;
+    }
+    exit;
+}
+
+sub group_of_apps {
+    my $wanted_groups = shift
+      or return ();
+
+    return ()
+      if ref $wanted_groups ne "ARRAY"
+      or !@$wanted_groups;
+
+    my $groups = $config->{groups}
+      or config_help("No group is define in your config");
+
+    config_help("Group config is missing or invalid")
+      if ref $groups ne "HASH"
+      or !%$groups;
+
+    foreach my $group_name (@$wanted_groups) {
+        my $group_config = $groups->{$group_name}
+          or config_help(
+            "Group name $group_name is not defined in the config");
+
+        my $apps = $group_config->{apps} || [];
+
+        config_help("groups.$group_name.apps need to be an array")
+          if ref $apps ne "ARRAY";
+
+        push @apps, @$apps;
+
+        my $grps = $group_config->{groups} || [];
+
+        config_help("groups.$group_name.groups need to be an array")
+          if ref $grps ne "ARRAY";
+
+        if ( @$grps ) {
+            push @apps, group_of_apps($grps);
+        }
+    }
+
+    return uniq @apps;
+}
+
+sub is_munning {
+    return Unix::PID->new->is_pid_running($munner_pid);
 }
