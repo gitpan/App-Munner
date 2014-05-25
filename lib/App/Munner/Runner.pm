@@ -102,7 +102,7 @@ sub _build_daemon {
             lsb_stop    => q{$syslog},
             lsb_sdesc   => $app,
             lsb_desc    => $app,
-
+            user        => $self->user,
             group       => $self->group,
             directory   => $self->base_dir,
             program     => $self->command,

@@ -16,6 +16,7 @@ no_index:
   package:
     - App::Munner::Runner
 requires:
+  Cwd: '0'
   Daemon::Control: '0'
   Data::UUID: '0'
   File::Temp: '0'
@@ -27,4 +28,4 @@ requires:
   Parallel::ForkManager: '0'
   Unix::PID: '0'
   YAML: '0'
-version: '0.5'
+version: '0.51'

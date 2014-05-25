@@ -1,3 +1,4 @@
+requires "Cwd";
 requires "Daemon::Control";
 requires "Data::UUID";
 requires "Module::Load";

@@ -23,6 +23,7 @@ my %WriteMakefileArgs = (
   "LICENSE" => "restrictive",
   "NAME" => "App::Munner",
   "PREREQ_PM" => {
+    "Cwd" => 0,
     "Daemon::Control" => 0,
     "Data::UUID" => 0,
     "File::Temp" => 0,
@@ -36,7 +37,7 @@ my %WriteMakefileArgs = (
     "YAML" => 0
   },
   "TEST_REQUIRES" => {},
-  "VERSION" => "0.5",
+  "VERSION" => "0.51",
   "test" => {
     "TESTS" => ""
   }
@@ -44,6 +45,7 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
+  "Cwd" => 0,
   "Daemon::Control" => 0,
   "Data::UUID" => 0,
   "File::Temp" => 0,

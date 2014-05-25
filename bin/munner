@@ -4,6 +4,7 @@ use warnings;
 
 use App::Munner;
 use App::Munner::Runner;
+use Cwd qw( abs_path );
 use Data::UUID;
 use File::Temp qw( tempfile );
 use Getopt::Long::Descriptive qw( describe_options );
@@ -16,9 +17,10 @@ use Module::Load qw( load );
 
 my $command = $ARGV[0] || "start";
 
-my $supported_commands = "start|duck|stop|restart|graceful|status|(access-|error-|)logs|help|doc";
+my $supported_commands =
+  "start|duck|stop|restart|graceful|status|(access-|error-|)logs|help|doc";
 
-if ( $command =~/($supported_commands)/ ) {
+if ( $command =~ /($supported_commands)/ ) {
     shift @ARGV;
 }
 else {
@@ -68,13 +70,16 @@ if ( !UNIVERSAL::isa( $config->{apps}, "HASH" ) ) {
 my %apps = %{ $config->{apps} }
   or config_help("Please specify APPs in your config");
 
-my @apps_from_groups = group_of_apps( $args->group );
-
 my @apps =
-    @apps_from_groups ? @apps_from_groups
-  : $args->all        ? ( keys %apps )
-  : @{ $args->app }
-  or cmd_help("Please specify the APP you want to start");
+  $args->all
+  ? ( keys %apps )
+  : @{ $args->app };
+
+push @apps, group_of_apps( $args->group );
+
+@apps or cmd_help("Please specify the APP you want to start");
+
+@apps = uniq @apps;
 
 my $forker = Parallel::ForkManager->new( scalar @apps );
 
@@ -93,10 +98,14 @@ foreach my $app_name (@apps) {
     config_help("APP $app_name working directory is not found --> $app_wd")
       if !-d $app_wd;
 
+    $app_wd = abs_path($app_wd);
+
     my $run = $app_config->{run}
       or config_help("APP $app_name has no start command");
 
     $app_config->{carton} //= 0;
+
+    my $exec = ( $run =~ /;/s ) ? q{} : "exec ";
 
     my $carton = $app_config->{carton} ? "carton exec " : q{};
 
@@ -113,7 +122,9 @@ foreach my $app_name (@apps) {
         SUFFIX  => ".sh"
     );
 
-    _make_run_script( $app_name => $env . "exec " . $carton . $run => ( $script, $fh ) );
+    _make_run_script(
+        $app_name => ( "cd $app_wd\n" . $env . $exec . $carton . $run ) =>
+          ( $script, $fh ) );
 
     my $runner = App::Munner::Runner->new(
         name        => $app_name,
@@ -140,13 +151,13 @@ foreach my $app_name (@apps) {
     elsif ( $command eq "status" ) {
         $runner->$command;
     }
-    elsif ( $command =~/logs/ ) {
-        my $error_log = $runner->error_log;
+    elsif ( $command =~ /logs/ ) {
+        my $error_log  = $runner->error_log;
         my $access_log = $runner->access_log;
-        if ( $command =~/access/ ) {
+        if ( $command =~ /access/ ) {
             system "tail -F $access_log";
         }
-        elsif ( $command =~/error/ ) {
+        elsif ( $command =~ /error/ ) {
             system "tail -F $error_log";
         }
         else {
@@ -154,7 +165,7 @@ foreach my $app_name (@apps) {
         }
     }
     else {
-        cmd_help( "Unknown command" );
+        cmd_help("Unknown command");
     }
 
     sleep 1;
@@ -244,19 +255,24 @@ HELP
 sub _env {
     my $list = shift
       or return q{};
-    return q{}
+
+    return config_help("env need to be in list")
       if ref $list ne "ARRAY";
+
     my $env = q{};
 
     foreach my $pair (@$list) {
         next
           if !$pair;
+
         next
           if ref $pair ne "HASH";
+
         my ( $key, $val ) = %$pair;
-        print ">> Inject Env: $key\n"
-            if $key ne "UUID";
-        $env .= join "=", map { quotemeta $_ } ( $key, $val );
+
+        print ">> Inject Env: $key\n";
+
+        $env .= join "=", quotemeta($key), $val;
         $env .= " \\\n";
     }
 
@@ -270,7 +286,7 @@ sub _make_run_script {
 
     my $filename = shift;
     my $fh       = shift;
-
+    print $fh "#!/bin/sh\n";
     print $fh $command;
     close $fh;
     chmod 0500, $filename;
@@ -279,7 +295,7 @@ sub _make_run_script {
 sub killer {
     foreach my $app_name (@apps) {
         my $app_config = $apps{$app_name};
-        my $pid       = delete $app_config->{pid}
+        my $pid        = delete $app_config->{pid}
           or next;
         kill sig_num("INT"), $pid;
     }
@@ -303,8 +319,7 @@ sub group_of_apps {
 
     foreach my $group_name (@$wanted_groups) {
         my $group_config = $groups->{$group_name}
-          or config_help(
-            "Group name $group_name is not defined in the config");
+          or config_help("Group name $group_name is not defined in the config");
 
         my $apps = $group_config->{apps} || [];
 
@@ -318,7 +333,7 @@ sub group_of_apps {
         config_help("groups.$group_name.groups need to be an array")
           if ref $grps ne "ARRAY";
 
-        if ( @$grps ) {
+        if (@$grps) {
             push @apps, group_of_apps($grps);
         }
     }
