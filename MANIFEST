@@ -11,4 +11,5 @@ cpanfile
 cpanfile.snapshot
 dist.ini
 lib/App/Munner.pm
+lib/App/Munner/Runner.pm
 munner.yml

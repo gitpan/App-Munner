@@ -12,14 +12,19 @@ meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: '1.4'
 name: App-Munner
+no_index:
+  package:
+    - App::Munner::Runner
 requires:
+  Daemon::Control: '0'
   Data::UUID: '0'
   File::Temp: '0'
   Getopt::Long::Descriptive: '0'
   IPC::Signal: '0'
   List::MoreUtils: '0'
+  Mo: '0'
   Module::Load: '0'
   Parallel::ForkManager: '0'
   Unix::PID: '0'
   YAML: '0'
-version: '0.42'
+version: '0.5'

@@ -1,5 +1,17 @@
 # carton snapshot format: version 1.0
 DISTRIBUTIONS
+  Daemon-Control-0.001005
+    pathname: S/SY/SYMKAT/Daemon-Control-0.001005.tar.gz
+    provides:
+      Daemon::Control 0.001005
+    requirements:
+      Cwd 0
+      ExtUtils::MakeMaker 6.59
+      File::Path 2.08
+      File::Spec 0
+      POSIX 0
+      Test::More 0.88
+      perl 5.008001
   Data-OptList-0.109
     pathname: R/RJ/RJBS/Data-OptList-0.109.tar.gz
     provides:
@@ -84,6 +96,30 @@ DISTRIBUTIONS
     requirements:
       ExtUtils::MakeMaker 0
       Math::Fibonacci 0
+  Mo-0.38
+    pathname: C/CA/CARLOS/Mo-0.38.tar.gz
+    provides:
+      Attr::Trait 0.38
+      Mo 0.38
+      Mo::Golf 0.38
+      Mo::Inline 0.38
+      Mo::Moose 0.38
+      Mo::Mouse 0.38
+      Mo::build 0.38
+      Mo::builder 0.38
+      Mo::chain 0.38
+      Mo::coerce 0.38
+      Mo::default 0.38
+      Mo::exporter 0.38
+      Mo::import 0.38
+      Mo::importer 0.38
+      Mo::is 0.38
+      Mo::nonlazy 0.38
+      Mo::option 0.38
+      Mo::required 0.38
+      Mo::xs 0.38
+    requirements:
+      ExtUtils::MakeMaker 6.30
   Module-Implementation-0.07
     pathname: D/DR/DROLSKY/Module-Implementation-0.07.tar.gz
     provides:

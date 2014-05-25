@@ -23,18 +23,20 @@ my %WriteMakefileArgs = (
   "LICENSE" => "restrictive",
   "NAME" => "App::Munner",
   "PREREQ_PM" => {
+    "Daemon::Control" => 0,
     "Data::UUID" => 0,
     "File::Temp" => 0,
     "Getopt::Long::Descriptive" => 0,
     "IPC::Signal" => 0,
     "List::MoreUtils" => 0,
+    "Mo" => 0,
     "Module::Load" => 0,
     "Parallel::ForkManager" => 0,
     "Unix::PID" => 0,
     "YAML" => 0
   },
   "TEST_REQUIRES" => {},
-  "VERSION" => "0.42",
+  "VERSION" => "0.5",
   "test" => {
     "TESTS" => ""
   }
@@ -42,11 +44,13 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
+  "Daemon::Control" => 0,
   "Data::UUID" => 0,
   "File::Temp" => 0,
   "Getopt::Long::Descriptive" => 0,
   "IPC::Signal" => 0,
   "List::MoreUtils" => 0,
+  "Mo" => 0,
   "Module::Load" => 0,
   "Parallel::ForkManager" => 0,
   "Unix::PID" => 0,

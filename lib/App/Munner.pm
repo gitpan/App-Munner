@@ -1,5 +1,5 @@
 package App::Munner;
-$App::Munner::VERSION = '0.42';
+$App::Munner::VERSION = '0.5';
 =head1 NAME
 
 Munner - Multi-Apps Runner
@@ -39,26 +39,24 @@ in one call. It is a very handy tools to start multiple applications.
 
 after install, just call
 
- munner <options>
+ munner <command> <options>
 
 =head2 Perlbrew
 
- perlbrew exec --with <PERL_VERSION> munner <options>
+ perlbrew exec --with <PERL_VERSION> munner <command> <options>
 
 =head2 carton
 
- carton exec munner <options>
+ carton exec munner <command> <options>
 
-=head1 Options
+=head1 Commands and Options
 
- munner [-Aacdh] [long options...]
+ munner [start|duck|stop|restart|graceful|status|(access-|error-|)logs|help|doc] [-Aacdg] [long options...]
         -c --config       App runner config file ( default ./munner.yml )
         -d --base-dir     Global base directory ( default ../ )
         -a --app          run App
         -g --group        run Group
         -A --all          run All
-        -h --cmd_help     Help
-        -p --perldoc      Perldoc App::Munner
 
 =head1 What else?
 
@@ -77,7 +75,6 @@ It looks like this:
         dir: "... either full path or the tail part after base_dir ..."
         run: "... command ..."
         carton: 1 or 0
-        non-stop: sleep N or pause
     db-api:
         dir: "... path cound find the command to run ..."
         env:
@@ -116,31 +113,36 @@ By default munner will find the config file at the current directory. If you hav
 the config some where else, you will need to tell munner like below:
 
  pwd --> /home/micvu/websrc/website
- munner -c /home/micvu/munner.yml <options> ...
+ munner start -c /home/micvu/munner.yml <options> ...
 
 If the config is in the current directory.
 
  pwd --> /home/micvu/websrc/website
  ls munner.yml --> munner.yml
- munner <options> --> without telling the config file location
+ munner start <options> --> without telling the config file location
 
 =head2 Command examples:
 
 start web-frontend only
 
- munner -a web-frontend
+ munner start -a web-frontend
 
-start event-api only
+start event-api at the background and start web-frontend
 
- munner -a event-api
+ munner duck -a event-api
+ munner start -a web-frontend
+
+restart background event-api
+
+ munner restart -a event-api 
 
 start everything website (db, event and login)
 
- munner -g website
+ munner start -g website
 
 start all apps in the config
 
- munner -A
+ munner start -A
 
 start all groups in the config?
 
@@ -148,11 +150,12 @@ start all groups in the config?
 
 show a simple help page
 
- munner -h
+ munner help
 
 show this perldoc
 
- perldoc App::Munner
+ either munner doc
+ or perldoc App::Munner
 
 =head1 AUTHOR
 

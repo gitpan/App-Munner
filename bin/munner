@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use App::Munner;
+use App::Munner::Runner;
 use Data::UUID;
 use File::Temp qw( tempfile );
 use Getopt::Long::Descriptive qw( describe_options );
@@ -15,7 +16,9 @@ use Module::Load qw( load );
 
 my $command = $ARGV[0] || "start";
 
-if ( $command =~/(start|help|doc)/ ) {
+my $supported_commands = "start|duck|stop|restart|graceful|status|(access-|error-|)logs|help|doc";
+
+if ( $command =~/($supported_commands)/ ) {
     shift @ARGV;
 }
 else {
@@ -25,10 +28,10 @@ else {
 my $version = $App::Munner::VERSION || q{};
 
 my ( $args, $usage ) = describe_options(
-    "munner [start|help|doc] %o\nversion: $version",
+    "munner [$supported_commands] %o\nversion: $version",
     [
         "config|c:s" => "App runner config file ( default ./munner.yml )",
-        { default => "munner.yml" }
+        { default => "$ENV{PWD}/munner.yml" }
     ],
     [
         "base-dir|d:s" => "Global base directory ( default ../ )"
@@ -78,6 +81,7 @@ my $forker = Parallel::ForkManager->new( scalar @apps );
 my $munner_pid = $$;
 
 foreach my $app_name (@apps) {
+
     my $app_config = $apps{$app_name}
       or config_help("APP $app_name config is not found");
 
@@ -98,48 +102,64 @@ foreach my $app_name (@apps) {
 
     $app_config->{env} ||= [];
 
-    my $chdir = "cd $app_wd\n";
-
     $app_config->{pid} = $forker->start
       and next;
 
-    while (1) {
-        print "Munning $app_name ...\n";
+    my $env = _env( $app_config->{env} );
 
-        my $env = _env( $app_config->{env} );
+    my ( $fh, $script ) = tempfile(
+        CLEANUP => 1,
+        UNLINK  => 1,
+        SUFFIX  => ".sh"
+    );
 
-        if ( $command eq "start" ) {
-            unlink _run( $app_name => $chdir . $env . "exec " . $carton . $run );
+    _make_run_script( $app_name => $env . "exec " . $carton . $run => ( $script, $fh ) );
+
+    my $runner = App::Munner::Runner->new(
+        name        => $app_name,
+        base_dir    => $app_wd,
+        config_file => $args->config,
+        command     => $script,
+    );
+
+    if ( $command eq "start" ) {
+        $runner->run;
+    }
+    elsif ( $command eq "duck" ) {
+        $runner->run_at_bg;
+    }
+    elsif ( $command eq "stop" ) {
+        $runner->$command;
+    }
+    elsif ( $command eq "restart" ) {
+        $runner->$command;
+    }
+    elsif ( $command eq "graceful" ) {
+        $runner->$command;
+    }
+    elsif ( $command eq "status" ) {
+        $runner->$command;
+    }
+    elsif ( $command =~/logs/ ) {
+        my $error_log = $runner->error_log;
+        my $access_log = $runner->access_log;
+        if ( $command =~/access/ ) {
+            system "tail -F $access_log";
         }
-
-        my $non_stop = $app_config->{"non-stop"} || q{};
-
-        last
-          if !$non_stop;
-
-        if ( $non_stop eq "pause" ) {
-            print "\n\nPress Enter to re-mun $app_name ...\n";
-            <STDIN>;
-            next;
+        elsif ( $command =~/error/ ) {
+            system "tail -F $error_log";
         }
-
-        if ( $non_stop =~ /sleep\s*(\d*)/ ) {
-            my $sec = $1 || 1;
-            sleep $sec;
-            next;
-        }
-
-        sleep 1;
-
-        if ( !is_munning() ) {
-            print "\n\n$app_name stops ...\n";
-            last;
+        else {
+            system "tail -F $access_log $error_log";
         }
     }
+    else {
+        cmd_help( "Unknown command" );
+    }
+
+    sleep 1;
 
     $forker->finish;
-
-    exit;
 }
 
 load "sigtrap", handler => \&killer, "INT";
@@ -243,20 +263,17 @@ sub _env {
     return $env;
 }
 
-sub _run {
+sub _make_run_script {
     my $app_name = shift;
     my $command  = shift
       or die "$app_name is MISSING RUN COMMAND.";
-    my ( $fh, $filename ) = tempfile(
-        CLEANUP => 1,
-        UNLINK  => 1,
-        SUFFIX  => ".sh"
-    );
+
+    my $filename = shift;
+    my $fh       = shift;
+
     print $fh $command;
     close $fh;
     chmod 0500, $filename;
-    system $filename;
-    return $filename;
 }
 
 sub killer {

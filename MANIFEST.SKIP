@@ -4,3 +4,5 @@ App-Munner-.*
 \.gitignore
 perltidy\.ERR
 local
+html
+repo
