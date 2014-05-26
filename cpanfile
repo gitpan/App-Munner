@@ -1,6 +1,5 @@
 requires "Cwd";
 requires "Daemon::Control";
-requires "Data::UUID";
 requires "Module::Load";
 requires "File::Temp";
 requires "Getopt::Long::Descriptive";

@@ -5,7 +5,6 @@ use warnings;
 use App::Munner;
 use App::Munner::Runner;
 use Cwd qw( abs_path );
-use Data::UUID;
 use File::Temp qw( tempfile );
 use Getopt::Long::Descriptive qw( describe_options );
 use IPC::Signal qw( sig_num );
