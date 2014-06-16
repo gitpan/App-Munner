@@ -16,6 +16,27 @@ has base_dir => (
     default => '.',
 );
 
+has app_config => (
+    is => "ro",
+    isa => "HashRef",
+);
+
+has env => (
+    is => "ro",
+    isa => "HashRef",
+    builder => "_build_env",
+);
+
+sub _build_env {
+    my $self = shift;
+    my $conf = $self->app_config;
+    return {}
+      if !$conf->{env};
+    return {}
+      if ref $conf->{env} ne "ARRAY";
+    return { map { my ( $key, $value ) = %$_ } @{ $conf->{env} } };
+}
+
 has user => (
     is      => "ro",
     isa     => "Str",
@@ -23,7 +44,8 @@ has user => (
 );
 
 sub _build_user {
-    return $ENV{USER};
+    my $self = shift;
+    return $self->env->{USER} || $ENV{USER};
 }
 
 has group => (
@@ -33,7 +55,8 @@ has group => (
 );
 
 sub _build_group {
-    return $ENV{USER};
+    my $self = shift;
+    return $self->env->{GROUP} || $ENV{USER};
 }
 
 has pid_file => (
@@ -46,7 +69,8 @@ sub _build_pid_file {
     my $self     = shift;
     my $base_dir = $self->base_dir || q{};
     my $app      = $self->name;
-    return "$base_dir/$app.pid";
+    $DB::single=2;
+    return $self->env->{PID_FILE} || "$base_dir/$app.pid";
 }
 
 has error_log => (
@@ -59,7 +83,7 @@ sub _build_error_log {
     my $self     = shift;
     my $base_dir = $self->base_dir || q{};
     my $app      = $self->name;
-    my $file     = "$base_dir/$app.error.log";
+    my $file     = $self->env->{ERROR_LOG} || "$base_dir/$app.error.log";
     system "touch $file";
     return $file;
 }
@@ -74,7 +98,7 @@ sub _build_access_log {
     my $self     = shift;
     my $base_dir = $self->base_dir || q{};
     my $app      = $self->name;
-    my $file     = "$base_dir/$app.access.log";
+    my $file     = $self->env->{ACCESS_LOG} || "$base_dir/$app.access.log";
     system "touch $file";
     return $file;
 }

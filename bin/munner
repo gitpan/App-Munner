@@ -17,7 +17,7 @@ use Module::Load qw( load );
 my $command = $ARGV[0] || "start";
 
 my $supported_commands =
-  "start|duck|stop|restart|graceful|status|(access-|error-|)logs|help|doc";
+  "start|duck|stop|restart|graceful|status|(access-|error-|)(logs|log)|help|doc";
 
 if ( $command =~ /($supported_commands)/ ) {
     shift @ARGV;
@@ -82,8 +82,6 @@ push @apps, group_of_apps( $args->group );
 
 my $forker = Parallel::ForkManager->new( scalar @apps );
 
-my $munner_pid = $$;
-
 foreach my $app_name (@apps) {
 
     my $app_config = $apps{$app_name}
@@ -92,7 +90,7 @@ foreach my $app_name (@apps) {
     my $app_dir = $app_config->{dir}
       or config_help("APP $app_name has no working directory");
 
-    my $app_wd = "$base_dir/$app_dir";
+    my $app_wd = $app_dir =~/^\// ? $app_dir : "$base_dir/$app_dir";
 
     config_help("APP $app_name working directory is not found --> $app_wd")
       if !-d $app_wd;
@@ -130,6 +128,7 @@ foreach my $app_name (@apps) {
         base_dir    => $app_wd,
         config_file => $args->config,
         command     => $script,
+        app_config  => $app_config,
     );
 
     if ( $command eq "start" ) {
@@ -150,7 +149,7 @@ foreach my $app_name (@apps) {
     elsif ( $command eq "status" ) {
         $runner->$command;
     }
-    elsif ( $command =~ /logs/ ) {
+    elsif ( $command =~ /log/ ) {
         my $error_log  = $runner->error_log;
         my $access_log = $runner->access_log;
         if ( $command =~ /access/ ) {
@@ -338,8 +337,4 @@ sub group_of_apps {
     }
 
     return uniq @apps;
-}
-
-sub is_munning {
-    return Unix::PID->new->is_pid_running($munner_pid);
 }

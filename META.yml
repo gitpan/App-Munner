@@ -27,4 +27,4 @@ requires:
   Parallel::ForkManager: '0'
   Unix::PID: '0'
   YAML: '0'
-version: '0.52'
+version: '0.53'

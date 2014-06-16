@@ -34,7 +34,7 @@ my %WriteMakefileArgs = (
     "Unix::PID" => 0,
     "YAML" => 0
   },
-  "VERSION" => "0.52",
+  "VERSION" => "0.53",
   "test" => {
     "TESTS" => ""
   }
