@@ -25,6 +25,5 @@ requires:
   Mo: '0'
   Module::Load: '0'
   Parallel::ForkManager: '0'
-  Unix::PID: '0'
   YAML: '0'
-version: '0.53'
+version: '0.54'

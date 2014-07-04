@@ -7,5 +7,4 @@ requires "IPC::Signal";
 requires "List::MoreUtils";
 requires "Mo";
 requires "Parallel::ForkManager";
-requires "Unix::PID";
 requires "YAML";

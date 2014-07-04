@@ -31,10 +31,9 @@ my %WriteMakefileArgs = (
     "Mo" => 0,
     "Module::Load" => 0,
     "Parallel::ForkManager" => 0,
-    "Unix::PID" => 0,
     "YAML" => 0
   },
-  "VERSION" => "0.53",
+  "VERSION" => "0.54",
   "test" => {
     "TESTS" => ""
   }
@@ -51,7 +50,6 @@ my %FallbackPrereqs = (
   "Mo" => 0,
   "Module::Load" => 0,
   "Parallel::ForkManager" => 0,
-  "Unix::PID" => 0,
   "YAML" => 0
 );
 

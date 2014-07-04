@@ -1,6 +1,5 @@
-package
-    App::Munner::Runner;
-
+package App::Munner::Runner;
+$App::Munner::Runner::VERSION = '0.54';
 use Daemon::Control;
 use Mo qw( builder );
 
@@ -17,13 +16,13 @@ has base_dir => (
 );
 
 has app_config => (
-    is => "ro",
+    is  => "ro",
     isa => "HashRef",
 );
 
 has env => (
-    is => "ro",
-    isa => "HashRef",
+    is      => "ro",
+    isa     => "HashRef",
     builder => "_build_env",
 );
 
@@ -45,18 +44,43 @@ has user => (
 
 sub _build_user {
     my $self = shift;
-    return $self->env->{USER} || $ENV{USER};
+    return ( $self->env->{USER} || $ENV{USER} )
+      or die "Environment USER is not set\n";
 }
 
-has group => (
+has sys_user_info => (
     is      => "ro",
-    isa     => "Int",
-    builder => "_build_group",
+    isa     => "HashRef",
+    builder => "_build_sys_user_info",
 );
 
-sub _build_group {
+sub _build_sys_user_info {
     my $self = shift;
-    return $self->env->{GROUP} || $ENV{USER};
+    my $user = $self->user;
+    my %info = ();
+    @info{qw( username password uid gid )} = getpwnam( $self->user )
+      or die "User ($user) is invalid\n";
+    return \%info;
+}
+
+has sys_uid => (
+    is      => "ro",
+    isa     => "Int",
+    builder => "_build_sys_uid",
+);
+
+sub _build_sys_uid {
+    shift->sys_user_info->{uid};
+}
+
+has sys_gid => (
+    is      => "ro",
+    isa     => "Int",
+    builder => "_build_sys_gid",
+);
+
+sub _build_sys_gid {
+    shift->sys_user_info->{gid};
 }
 
 has pid_file => (
@@ -69,8 +93,7 @@ sub _build_pid_file {
     my $self     = shift;
     my $base_dir = $self->base_dir || q{};
     my $app      = $self->name;
-    $DB::single=2;
-    return $self->env->{PID_FILE} || "$base_dir/$app.pid";
+    return $self->_touch( $self->env->{PID_FILE} || "$base_dir/$app.pid" );
 }
 
 has error_log => (
@@ -83,9 +106,8 @@ sub _build_error_log {
     my $self     = shift;
     my $base_dir = $self->base_dir || q{};
     my $app      = $self->name;
-    my $file     = $self->env->{ERROR_LOG} || "$base_dir/$app.error.log";
-    system "touch $file";
-    return $file;
+    return $self->_touch( $self->env->{ERROR_LOG}
+          || "$base_dir/$app.error.log" );
 }
 
 has access_log => (
@@ -98,9 +120,8 @@ sub _build_access_log {
     my $self     = shift;
     my $base_dir = $self->base_dir || q{};
     my $app      = $self->name;
-    my $file     = $self->env->{ACCESS_LOG} || "$base_dir/$app.access.log";
-    system "touch $file";
-    return $file;
+    return $self->_touch( $self->env->{ACCESS_LOG}
+          || "$base_dir/$app.access.log" );
 }
 
 has command => (
@@ -115,10 +136,24 @@ has _daemon => (
     builder => "_build_daemon",
 );
 
+has todo => (
+    is       => "ro",
+    isa      => "Str",
+    required => 1,
+);
+
 sub _build_daemon {
     my $self   = shift;
     my $config = $self->config_file;
     my $app    = $self->name;
+    my $cmd    = $self->command;
+    my $info   = $self->sys_user_info;
+
+    $self->_touch($cmd)
+      if -f $cmd;
+
+    my $fork_mode = $self->todo =~ /start|duck/ ? 2 : 1;
+
     my $daemon = Daemon::Control->new(
         {
             name        => $app,
@@ -126,16 +161,17 @@ sub _build_daemon {
             lsb_stop    => q{$syslog},
             lsb_sdesc   => $app,
             lsb_desc    => $app,
-            user        => $self->user,
-            group       => $self->group,
             directory   => $self->base_dir,
-            program     => $self->command,
+            program     => $cmd,
             pid_file    => $self->pid_file,
             stderr_file => $self->error_log,
             stdout_file => $self->access_log,
-            fork        => 1,
+            fork        => $fork_mode,
+            uid         => $info->{uid},
+            gid         => $info->{gid},
         }
     );
+
     return $daemon;
 }
 
@@ -148,7 +184,6 @@ sub run_at_bg {
     my $self   = shift;
     my $daemon = $self->_daemon;
     $daemon->do_start;
-    $daemon->write_pid;
 }
 
 sub stop {
@@ -175,6 +210,33 @@ has config_file => (
 sub status {
     my $self = shift;
     $self->_daemon->do_status;
+}
+
+sub _set_file_permission {
+    my $self = shift;
+    my $file = shift
+      or die "FIXME: Missing file name";
+    die "FIXME: file is not found"
+      if !-f $file;
+    my $info = $self->sys_user_info;
+    my $uid  = $info->{uid};
+    my $gid  = $info->{gid};
+    chown $uid, $gid, $file
+      or die "Unable to chown $file\n";
+    chmod 0700, $file
+      or die "Unable to chown $file to 0700\n";
+}
+
+sub _touch {
+    my $self = shift;
+    my $file = shift;
+    open my $FH, ">>", $file
+      or die "Unable to touch file $file because $!\n";
+    print $FH q{};
+    close $FH;
+    $self->_set_file_permission($file);
+    my $app = $self->name;
+    return $file;
 }
 
 1;

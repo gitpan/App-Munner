@@ -4,20 +4,19 @@ use warnings;
 
 use App::Munner;
 use App::Munner::Runner;
-use Cwd qw( abs_path );
+use Cwd qw( abs_path getcwd );
 use File::Temp qw( tempfile );
 use Getopt::Long::Descriptive qw( describe_options );
 use IPC::Signal qw( sig_num );
 use List::MoreUtils qw( uniq );
-use Parallel::ForkManager;
-use Unix::PID;
-use YAML qw( Load );
 use Module::Load qw( load );
+use Parallel::ForkManager;
+use YAML qw( Load );
 
 my $command = $ARGV[0] || "start";
 
 my $supported_commands =
-  "start|duck|stop|restart|graceful|status|(access-|error-|)(logs|log)|help|doc";
+"start|duck|stop|restart|graceful|status|(access-|error-|)(logs|log)|help|doc";
 
 if ( $command =~ /($supported_commands)/ ) {
     shift @ARGV;
@@ -27,6 +26,8 @@ else {
 }
 
 my $version = $App::Munner::VERSION || q{};
+
+$ENV{PWD} ||= getcwd();
 
 my ( $args, $usage ) = describe_options(
     "munner [$supported_commands] %o\nversion: $version",
@@ -90,7 +91,7 @@ foreach my $app_name (@apps) {
     my $app_dir = $app_config->{dir}
       or config_help("APP $app_name has no working directory");
 
-    my $app_wd = $app_dir =~/^\// ? $app_dir : "$base_dir/$app_dir";
+    my $app_wd = $app_dir =~ /^\// ? $app_dir : "$base_dir/$app_dir";
 
     config_help("APP $app_name working directory is not found --> $app_wd")
       if !-d $app_wd;
@@ -129,6 +130,7 @@ foreach my $app_name (@apps) {
         config_file => $args->config,
         command     => $script,
         app_config  => $app_config,
+        todo        => $command,
     );
 
     if ( $command eq "start" ) {
@@ -268,8 +270,6 @@ sub _env {
 
         my ( $key, $val ) = %$pair;
 
-        print ">> Inject Env: $key\n";
-
         $env .= join "=", quotemeta($key), $val;
         $env .= " \\\n";
     }
@@ -287,7 +287,7 @@ sub _make_run_script {
     print $fh "#!/bin/sh\n";
     print $fh $command;
     close $fh;
-    chmod 0500, $filename;
+    chmod 0700, $filename;
 }
 
 sub killer {
