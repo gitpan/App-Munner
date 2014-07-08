@@ -1,3 +1,8 @@
+2014-07-08 - 0.55
+    + Set environment variable USER to chown the running process
+    + Set environment variable PID_FILE to specify the pid file location as well as ACCESS_LOG and ERROR_LOG
+    + Set environment variable TERMINAL to leave TTY / PTTY on at the background
+
 2014-05-25 - 0.5
     + Added stop / start / restart / graceful etc...
 

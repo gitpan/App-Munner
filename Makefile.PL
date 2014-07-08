@@ -33,7 +33,7 @@ my %WriteMakefileArgs = (
     "Parallel::ForkManager" => 0,
     "YAML" => 0
   },
-  "VERSION" => "0.54",
+  "VERSION" => "0.55",
   "test" => {
     "TESTS" => ""
   }
