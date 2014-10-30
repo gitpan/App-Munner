@@ -1,5 +1,5 @@
 package App::Munner::Runner;
-$App::Munner::Runner::VERSION = '0.55';
+$App::Munner::Runner::VERSION = '0.56';
 use Daemon::Control;
 use Mo qw( builder );
 
@@ -30,9 +30,9 @@ sub _build_env {
     my $self = shift;
     my $conf = $self->app_config;
     return {}
-      if !$conf->{env};
+        if !$conf->{env};
     return {}
-      if ref $conf->{env} ne "ARRAY";
+        if ref $conf->{env} ne "ARRAY";
     return { map { my ( $key, $value ) = %$_ } @{ $conf->{env} } };
 }
 
@@ -44,7 +44,9 @@ has fork_mode => (
 
 sub _build_fork_mode {
     my $self = shift;
-    return $self->env->{TERMINAL} ? 1 : ( $self->todo =~ /start|duck/ ? 2 : 1 );
+    return ( $ENV{TERMINAL} // $self->env->{TERMINAL} )
+        ? 1
+        : ( $self->todo =~ /start|duck/ ? 2 : 1 );
 }
 
 has user => (
@@ -55,8 +57,9 @@ has user => (
 
 sub _build_user {
     my $self = shift;
-    return ( $self->env->{USER} || $ENV{USER} )
-      or die "Environment USER is not set\n";
+    my $user = ( $self->env->{USER} || $ENV{USER} )
+        or die "Environment USER is not set\n";
+    return $user;
 }
 
 has sys_user_info => (
@@ -70,7 +73,7 @@ sub _build_sys_user_info {
     my $user = $self->user;
     my %info = ();
     @info{qw( username password uid gid )} = getpwnam( $self->user )
-      or die "User ($user) is invalid\n";
+        or die "User ($user) is invalid\n";
     return \%info;
 }
 
@@ -101,11 +104,11 @@ has log_dir => (
 );
 
 sub _build_log_dir {
-    my $self = shift;
-    my $env = $self->env;
-    my $log_dir = $env->{LOG_DIR}
+    my $self    = shift;
+    my $env     = $self->env;
+    my $log_dir = $ENV{LOG_DIR} || $env->{LOG_DIR}
         or return q{};
-    if ( $log_dir !~/^\// ) {
+    if ( $log_dir !~ /^\// ) {
         my $base_dir = $self->base_dir || q{};
         $log_dir = "$base_dir/$log_dir";
     }
@@ -124,7 +127,9 @@ sub _build_pid_file {
     my $self     = shift;
     my $base_dir = $self->log_dir || $self->base_dir || q{};
     my $app      = $self->name;
-    return $self->_touch( $self->env->{PID_FILE} || "$base_dir/$app.pid" );
+    my $file
+        = $ENV{PID_FILE} || $self->env->{PID_FILE} || "$base_dir/$app.pid";
+    return $self->_touch($file);
 }
 
 has error_log => (
@@ -137,8 +142,11 @@ sub _build_error_log {
     my $self     = shift;
     my $base_dir = $self->log_dir || $self->base_dir || q{};
     my $app      = $self->name;
-    return $self->_touch( $self->env->{ERROR_LOG}
-          || "$base_dir/$app.error.log" );
+    my $file
+        = $ENV{ERROR_LOG}
+        || $self->env->{ERROR_LOG}
+        || "$base_dir/$app.error.log";
+    return $self->_touch($file);
 }
 
 has access_log => (
@@ -151,8 +159,11 @@ sub _build_access_log {
     my $self     = shift;
     my $base_dir = $self->log_dir || $self->base_dir || q{};
     my $app      = $self->name;
-    return $self->_touch( $self->env->{ACCESS_LOG}
-          || "$base_dir/$app.access.log" );
+    my $file
+        = $ENV{ACCESS_LOG}
+        || $self->env->{ACCESS_LOG}
+        || "$base_dir/$app.access.log";
+    return $self->_touch($file);
 }
 
 has command => (
@@ -181,11 +192,10 @@ sub _build_daemon {
     my $info   = $self->sys_user_info;
 
     $self->_touch($cmd)
-      if -f $cmd;
+        if -f $cmd;
 
     my $daemon = Daemon::Control->new(
-        {
-            name        => $app,
+        {   name        => $app,
             lsb_start   => q{$syslog $remote_fs},
             lsb_stop    => q{$syslog},
             lsb_sdesc   => $app,
@@ -244,23 +254,23 @@ sub status {
 sub _set_file_permission {
     my $self = shift;
     my $file = shift
-      or die "FIXME: Missing file name";
+        or die "FIXME: Missing file name";
     die "FIXME: file is not found"
-      if !-f $file;
+        if !-f $file;
     my $info = $self->sys_user_info;
     my $uid  = $info->{uid};
     my $gid  = $info->{gid};
     chown $uid, $gid, $file
-      or die "Unable to chown $file\n";
+        or die "Unable to chown $file\n";
     chmod 0700, $file
-      or die "Unable to chown $file to 0700\n";
+        or die "Unable to chown $file to 0700\n";
 }
 
 sub _touch {
     my $self = shift;
     my $file = shift;
     open my $FH, ">>", $file
-      or die "Unable to touch file $file because $!\n";
+        or die "Unable to touch file $file because $!\n";
     print $FH q{};
     close $FH;
     $self->_set_file_permission($file);

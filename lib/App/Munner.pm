@@ -1,5 +1,5 @@
 package App::Munner;
-$App::Munner::VERSION = '0.55';
+$App::Munner::VERSION = '0.56';
 =head1 NAME
 
 Munner - Multi-Apps Runner

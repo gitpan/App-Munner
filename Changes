@@ -1,3 +1,7 @@
+2014-10-30 - 0.56
+    + Use environment variable to override PID_FILE, ERROR_LOG and ACCESS_LOG
+    + bugfix
+
 2014-07-08 - 0.55
     + Set environment variable USER to chown the running process
     + Set environment variable PID_FILE to specify the pid file location as well as ACCESS_LOG and ERROR_LOG
