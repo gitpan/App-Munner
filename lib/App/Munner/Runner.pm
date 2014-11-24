@@ -1,5 +1,5 @@
 package App::Munner::Runner;
-$App::Munner::Runner::VERSION = '0.56';
+$App::Munner::Runner::VERSION = '0.57';
 use Daemon::Control;
 use Mo qw( builder );
 

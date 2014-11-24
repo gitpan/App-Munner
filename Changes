@@ -1,3 +1,6 @@
+2014-11-24 - 0.57
+    + munner support solo config to start multi-worker processes
+
 2014-10-30 - 0.56
     + Use environment variable to override PID_FILE, ERROR_LOG and ACCESS_LOG
     + bugfix

@@ -23,13 +23,6 @@ DISTRIBUTIONS
       Sub::Install 0.921
       strict 0
       warnings 0
-  Data-UUID-1.219
-    pathname: R/RJ/RJBS/Data-UUID-1.219.tar.gz
-    provides:
-      Data::UUID 1.219
-    requirements:
-      Digest::MD5 0
-      ExtUtils::MakeMaker 0
   Getopt-Long-Descriptive-0.097
     pathname: R/RJ/RJBS/Getopt-Long-Descriptive-0.097.tar.gz
     provides:
@@ -49,31 +42,12 @@ DISTRIBUTIONS
       overload 0
       strict 0
       warnings 0
-  IO-Prompt-0.997002
-    pathname: D/DC/DCONWAY/IO-Prompt-0.997002.tar.gz
-    provides:
-      IO::Prompt 0.997002
-    requirements:
-      IO::Handle 0
-      POSIX 0
-      Term::ReadKey 0
-      Test::More 0
-      Want 0
-      version 0
   IPC-Signal-1.00
     pathname: R/RO/ROSCH/IPC-Signal-1.00.tar.gz
     provides:
       IPC::Signal 1.00
     requirements:
       ExtUtils::MakeMaker 0
-  List-Cycle-1.02
-    pathname: P/PE/PETDANCE/List-Cycle-1.02.tar.gz
-    provides:
-      List::Cycle 1.02
-    requirements:
-      Carp 0
-      ExtUtils::MakeMaker 0
-      Test::More 0
   List-MoreUtils-0.33
     pathname: A/AD/ADAMK/List-MoreUtils-0.33.tar.gz
     provides:
@@ -83,19 +57,6 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 6.52
       Test::More 0.82
       perl 5.00503
-  Math-Fibonacci-1.5
-    pathname: V/VI/VIPUL/Math-Fibonacci-1.5.tar.gz
-    provides:
-      Math::Fibonacci 1.5
-    requirements:
-      ExtUtils::MakeMaker 0
-  Math-Fibonacci-Phi-0.02
-    pathname: D/DM/DMUEY/Math-Fibonacci-Phi-0.02.tar.gz
-    provides:
-      Math::Fibonacci::Phi 0.02
-    requirements:
-      ExtUtils::MakeMaker 0
-      Math::Fibonacci 0
   Mo-0.38
     pathname: C/CA/CARLOS/Mo-0.38.tar.gz
     provides:
@@ -120,14 +81,65 @@ DISTRIBUTIONS
       Mo::xs 0.38
     requirements:
       ExtUtils::MakeMaker 6.30
+  Module-Build-0.4205
+    pathname: L/LE/LEONT/Module-Build-0.4205.tar.gz
+    provides:
+      Module::Build 0.4205
+      Module::Build::Base 0.4205
+      Module::Build::Compat 0.4205
+      Module::Build::Config 0.4205
+      Module::Build::Cookbook 0.4205
+      Module::Build::Dumper 0.4205
+      Module::Build::ModuleInfo 0.4205
+      Module::Build::Notes 0.4205
+      Module::Build::PPMMaker 0.4205
+      Module::Build::Platform::Default 0.4205
+      Module::Build::Platform::MacOS 0.4205
+      Module::Build::Platform::Unix 0.4205
+      Module::Build::Platform::VMS 0.4205
+      Module::Build::Platform::VOS 0.4205
+      Module::Build::Platform::Windows 0.4205
+      Module::Build::Platform::aix 0.4205
+      Module::Build::Platform::cygwin 0.4205
+      Module::Build::Platform::darwin 0.4205
+      Module::Build::Platform::os2 0.4205
+      Module::Build::PodParser 0.4205
+      Module::Build::Version 0.87
+      Module::Build::YAML 1.41
+      inc::latest 0.4205
+      inc::latest::private 0.4205
+    requirements:
+      CPAN::Meta 2.110420
+      CPAN::Meta::YAML 0.003
+      Cwd 0
+      Data::Dumper 0
+      ExtUtils::CBuilder 0.27
+      ExtUtils::Install 0
+      ExtUtils::Manifest 0
+      ExtUtils::Mkbootstrap 0
+      ExtUtils::ParseXS 2.21
+      File::Basename 0
+      File::Compare 0
+      File::Copy 0
+      File::Find 0
+      File::Path 0
+      File::Spec 0.82
+      File::Temp 0.15
+      Getopt::Long 0
+      Module::Metadata 1.000002
+      Parse::CPAN::Meta 1.4401
+      Perl::OSType 1
+      Pod::Man 2.17
+      Test::Harness 3.16
+      Test::More 0.49
+      Text::Abbrev 0
+      Text::ParseWords 0
+      perl 5.006001
+      version 0.87
   Module-Implementation-0.07
     pathname: D/DR/DROLSKY/Module-Implementation-0.07.tar.gz
     provides:
       Module::Implementation 0.07
-      T::Impl1 undef
-      T::Impl2 undef
-      T::ImplFails1 undef
-      T::ImplFails2 undef
     requirements:
       Carp 0
       ExtUtils::MakeMaker 6.30
@@ -172,23 +184,10 @@ DISTRIBUTIONS
     pathname: D/DR/DROLSKY/Params-Validate-1.08.tar.gz
     provides:
       Attribute::Params::Validate 1.08
-      Bar undef
-      Baz undef
-      Foo undef
-      PVTests undef
-      PVTests::Callbacks undef
-      PVTests::Defaults undef
-      PVTests::Regex undef
-      PVTests::Standard undef
-      PVTests::With undef
       Params::Validate 1.08
       Params::Validate::Constants 1.08
       Params::Validate::PP 1.08
       Params::Validate::XS 1.08
-      Quux undef
-      Testing::X undef
-      Yadda undef
-      inc::MyModuleBuild undef
     requirements:
       Attribute::Handlers 0.79
       Carp 0
@@ -208,13 +207,6 @@ DISTRIBUTIONS
     provides:
       Sub::Exporter 0.987
       Sub::Exporter::Util 0.987
-      Test::SubExporter::DashSetup undef
-      Test::SubExporter::Faux undef
-      Test::SubExporter::GroupGen undef
-      Test::SubExporter::GroupGenSubclass undef
-      Test::SubExporter::ObjGen undef
-      Test::SubExporter::ObjGen::Obj undef
-      Test::SubExporter::s_e undef
     requirements:
       Carp 0
       Data::OptList 0.100
@@ -234,13 +226,6 @@ DISTRIBUTIONS
       Scalar::Util 0
       strict 0
       warnings 0
-  TermReadKey-2.31
-    pathname: J/JS/JSTOWE/TermReadKey-2.31.tar.gz
-    provides:
-      Configure undef
-      Term::ReadKey 2.31
-    requirements:
-      ExtUtils::MakeMaker 0
   Try-Tiny-0.21
     pathname: D/DO/DOY/Try-Tiny-0.21.tar.gz
     provides:
@@ -252,27 +237,9 @@ DISTRIBUTIONS
       constant 0
       strict 0
       warnings 0
-  Unix-PID-0.23
-    pathname: D/DM/DMUEY/Unix-PID-0.23.tar.gz
-    provides:
-      Unix::PID 0.23
-    requirements:
-      ExtUtils::MakeMaker 0
-      Fcntl 0
-      List::Cycle 0
-      Math::Fibonacci::Phi 0
-      Time::HiRes 0
-  Want-0.23
-    pathname: R/RO/ROBIN/Want-0.23.tar.gz
-    provides:
-      Want 0.23
-    requirements:
-      ExtUtils::MakeMaker 0
   YAML-0.90
     pathname: I/IN/INGY/YAML-0.90.tar.gz
     provides:
-      Spiffy 0.31
-      Test::Base::Filter undef
       Test::YAML 0.90
       Test::YAML::Filter 0.90
       YAML 0.90
@@ -294,8 +261,6 @@ DISTRIBUTIONS
       YAML::Type::undef 0.90
       YAML::Types 0.90
       YAML::Warning 0.90
-      t::Base undef
-      t::TestYAML undef
       yaml_mapping 0.90
       yaml_scalar 0.90
       yaml_sequence 0.90

@@ -11,7 +11,7 @@ use IPC::Signal qw( sig_num );
 use List::MoreUtils qw( uniq );
 use Module::Load qw( load );
 use Parallel::ForkManager;
-use YAML qw( Load );
+use YAML qw( Load Dump );
 
 my $command = $ARGV[0] || "start";
 
@@ -120,6 +120,32 @@ foreach my $app_name (@apps) {
         SUFFIX  => ".sh"
     );
 
+    my %worker_config = ();
+
+    if ( $app_config->{workers} ) {
+        ## pass the original command to workers
+        my $worker_control = $command;
+
+        ## start worker in frontground won't work
+        $worker_control = "duck"
+            if $worker_control eq "start";
+
+        ## reset the original command and let the worker munner to work
+        $command = "start";
+
+        @worker_config{qw(fh file)} = tempfile(
+            CLEANUP => 1,
+            UNLINK  => 1,
+            SUFFIX  => ".worker.munner.yml"
+        );
+
+        _make_worker_config( $app_name, $app_wd, $app_config, %worker_config );
+
+        $exec   = "exec ";
+        $carton = q{};
+        $run = "munner $worker_control -c $worker_config{file} -g $app_name";
+    }
+
     _make_run_script(
         $app_name => ( "cd $app_wd\n" . $env . $exec . $carton . $run ) =>
           ( $script, $fh ) );
@@ -226,6 +252,32 @@ sub _env {
     return $env;
 }
 
+sub _inject_env {
+    my $worker     = shift;
+    my $log_dir    = { LOG_DIR => "/tmp" };
+    my $pid_file   = { PID_FILE => "/tmp/$worker.pid" };
+    my $access_log = { ACCESS_LOG => "/tmp/$worker.access.log" };
+    my $error_log  = { ERROR_LOG => "/tmp/$worker.error.log" };
+    my @envs       = @_
+      or return ( $log_dir );
+    foreach my $env(@envs) {
+        my ($key, $value) = %$env;
+        if ( $key eq "ERROR_LOG" ) {
+            $value =~s/\.error/$worker.error/
+                or $value =~s/\.log/$worker.log/;
+        }
+        elsif ( $key eq "ACCESS_LOG" ) {
+            $value =~s/\.access/$worker.access/
+                or $value =~s/\.log/$worker.log/;
+        }
+        elsif ( $key eq "PID_FILE" ) {
+            $value =~s/\.pid/$worker.pid/;
+        }
+        $env = { $key => $value };
+    }
+    return @envs;
+}
+
 sub _make_run_script {
     my $app_name = shift;
     my $command  = shift
@@ -235,6 +287,43 @@ sub _make_run_script {
     my $fh       = shift;
     print $fh "#!/bin/sh\n";
     print $fh $command;
+    close $fh;
+    chmod 0700, $filename;
+}
+
+sub _make_worker_config {
+    my $app_name   = shift;
+    my $base_dir   = shift;
+    my $app_config = shift
+      or die "$app_name is MISSING RUN COMMAND.";
+    my %worker_config  = @_;
+    my $filename = $worker_config{file};
+    my $fh       = $worker_config{fh};
+
+    my $num_of_workers = $app_config->{workers};
+
+    my %workers = map {
+        my $worker_name = "$app_name-worker-$_";
+        (
+            $worker_name => {
+                dir => ".",
+                env =>
+                  [ _inject_env( $worker_name => @{ $app_config->{env} } ) ],
+                carton => $app_config->{carton},
+                run    => $app_config->{run}
+            }
+          )
+    } ( 1 .. $num_of_workers );
+
+    %worker_config = (
+        base_dir => $base_dir,
+        apps     => \%workers,
+        groups   => {
+            $app_name => { apps => [ sort keys %workers ] },
+        },
+    );
+
+    print $fh Dump( \%worker_config );
     close $fh;
     chmod 0700, $filename;
 }
